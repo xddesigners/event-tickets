@@ -256,12 +256,23 @@ class Buyable extends DataObject
 
     public function getSoldAmount()
     {
-        return OrderItem::get()->filter([
+        $orderItems = OrderItem::get()->filter([
             'Reservation.Status' => [
                 Reservation::STATUS_PAID,
             ],
             'BuyableID' => $this->ID
-        ])->sum('Amount');
+        ]);
+        $count = 0;
+        if ($orderItems->exists()) {
+            foreach ($orderItems as $orderItem) {
+                $reservation = $orderItem->Reservation();
+                if( $reservation->exists() ) {
+                    $attendees = $reservation->Attendees()->filter(['TicketStatus' => 'Active']);
+                    $count += $attendees->Count();
+                }
+            }
+        }
+        return $count;
     }
 
     public function getReservedAmount()
